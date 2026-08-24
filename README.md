@@ -16,6 +16,10 @@ cd ~/ubuntu-dotfiles
 `bootstrap.sh` is idempotent, so re-running it to pick up a new tool is safe.
 It needs `sudo`.
 
+Because `gh auth login` has to happen before cloning a private repo, `~/.config/gh/config.yml` already exists by the time stow runs.
+That is a real conflict and bootstrap handles it: conflicting files are moved to `~/dotfiles-backup-<timestamp>/` before stowing.
+Your credentials in `hosts.yml` are gitignored and never touched.
+
 Then open a new terminal and:
 
 1. Wait a few seconds on first launch while zinit installs the zsh plugins.

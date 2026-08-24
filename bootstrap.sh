@@ -131,8 +131,13 @@ mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude"
 # Move conflicting real files aside rather than using `stow --adopt`, which
 # would pull Ubuntu's defaults *into* the repo and overwrite the ported configs.
 BACKUP="$HOME/dotfiles-backup-$(date +%Y%m%d%H%M%S)"
-conflicts=$(stow -t "$HOME" -n . 2>&1 |
-	sed -n 's/.*cannot stow .* over existing target \(.*\) since .*/\1/p' || true)
+# stow's conflict wording differs by version, so match both:
+#   2.3.x: "existing target is neither a link nor a directory: PATH"
+#   2.4.x: "cannot stow SRC over existing target PATH since ..."
+conflicts=$(stow -t "$HOME" -n . 2>&1 | sed -n \
+	-e 's/.*existing target is neither a link nor a directory: *\(.*\)$/\1/p' \
+	-e 's/.*cannot stow .* over existing target \(.*\) since .*/\1/p' |
+	sed 's/[[:space:]]*$//' | sort -u || true)
 if [ -n "$conflicts" ]; then
 	log "Backing up conflicting files to $BACKUP"
 	while IFS= read -r rel; do
