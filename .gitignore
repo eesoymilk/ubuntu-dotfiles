@@ -1,0 +1,19 @@
+# Credentials and tokens
+.config/gcloud/
+.config/gh/hosts.yml
+.config/github-copilot/
+.config/configstore/
+
+# uv self-update receipt: machine-local install bookkeeping, not config
+.config/uv/
+
+# tmux: TPM clones plugins here at runtime; keep dir present via .gitkeep
+.config/tmux/plugins/*
+!.config/tmux/plugins/.gitkeep
+
+# vercel plugin runtime state
+.config/vercel-plugin/
+
+# zed: not tracking (lives here only because ~/.config is the repo)
+.config/zed/
+.claude/settings.local.json
