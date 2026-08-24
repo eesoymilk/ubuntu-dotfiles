@@ -7,8 +7,18 @@ Sibling repos: `air-dotfiles` (macOS), `arch-dotfiles-btw` (Arch + Hyprland).
 
 ## Install
 
+This repo is private, so install and authenticate `gh` first:
+
 ```bash
-git clone https://github.com/eesoymilk/ubuntu-dotfiles.git ~/ubuntu-dotfiles
+sudo apt update && sudo apt install -y git gh
+gh auth login   # GitHub.com -> HTTPS -> authenticate git -> browser
+```
+
+Then clone to exactly `~/ubuntu-dotfiles` (the path is baked into `tmux-sessionizer`
+and the yazi `g .` keybind):
+
+```bash
+gh repo clone eesoymilk/ubuntu-dotfiles ~/ubuntu-dotfiles
 cd ~/ubuntu-dotfiles
 ./bootstrap.sh
 ```
@@ -26,7 +36,6 @@ Then open a new terminal and:
 2. Start `tmux` once so TPM clones itself and installs plugins.
 3. `nvm install --lts`
 4. Set your terminal font to **JetBrainsMono Nerd Font**.
-5. `gh auth login`
 
 ## What's here
 
