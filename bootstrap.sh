@@ -155,6 +155,23 @@ chmod +x "$HOME/.local/bin/tmux-sessionizer" 2>/dev/null || true
 mkdir -p "$HOME/.claude"
 ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
+# ------------------------------------------------------------------ verify
+# Installing a tool and having it on PATH are different things: the nvim
+# tarball unpacks to /opt/nvim/bin, which is not the same as /opt/nvim.
+# Check against the PATH .zshrc actually builds, not this script's.
+log "Verifying tools resolve on the shell PATH"
+CHECK_PATH="$HOME/.local/bin:/opt/nvim/bin:/usr/local/go/bin:$PATH"
+missing=""
+for t in nvim tmux zsh stow fzf fd bat eza zoxide oh-my-posh yazi lazygit delta git gh; do
+	PATH="$CHECK_PATH" command -v "$t" >/dev/null 2>&1 || missing="$missing $t"
+done
+if [ -n "$missing" ]; then
+	echo "  MISSING:$missing"
+	echo "  (re-run bootstrap, or install these by hand - see README troubleshooting)"
+else
+	echo "  all tools resolve"
+fi
+
 # -------------------------------------------------------------- default shell
 LOGIN_SHELL=$(getent passwd "$USER" | cut -d: -f7)
 if [ "$(basename "$LOGIN_SHELL")" != "zsh" ]; then
