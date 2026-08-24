@@ -54,6 +54,29 @@ Then open a new terminal and:
 
 Not ported from the macOS repo: `aerospace/` (macOS-only), `btop/` and `htop/` (auto-generated stock defaults).
 
+## Install methods
+
+Every tool is installed the way its own documentation prescribes, rather than by a hand-rolled fetch.
+Upstream changes asset names and layouts, and the documented path is what keeps `bootstrap.sh` working over time.
+
+| Tool | Method |
+| --- | --- |
+| zsh, stow, tmux, git, ripgrep, jq, wl-clipboard | Ubuntu apt |
+| fd, bat | Ubuntu apt as `fdfind` / `batcat`, symlinked to upstream names |
+| neovim | official release tarball under `/opt`, with a stable `/opt/nvim` symlink |
+| eza | official apt repository (`deb.gierens.de`) |
+| yazi | official apt repository (`yazi-rs.github.io/builds`) |
+| fzf | official git clone + `~/.fzf/install --no-update-rc` |
+| zoxide, oh-my-posh, lazydocker, nvm | official upstream install scripts |
+| lazygit | apt where packaged, else the official release recipe |
+| git-delta | official `.deb` from the releases page |
+| gh | GitHub's official apt repository |
+
+Both `amd64` and `arm64` are handled; the script resolves each project's asset naming from `uname -m` and exits early on anything else.
+
+Two installers need guarding because `~/.zshrc` is a symlink into this repo: `fzf` gets `--no-update-rc` and `nvm` gets `PROFILE=/dev/null`.
+Without those, each would append its own setup lines into the dotfiles and propagate to the other machines.
+
 ## Differences from the macOS repo
 
 These are the only real deltas.
