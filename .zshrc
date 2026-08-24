@@ -1,5 +1,5 @@
 # Path
-export PATH="$HOME/.local/bin:/opt/nvim/bin:/usr/local/go/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.fzf/bin:/opt/nvim/bin:/usr/local/go/bin:$PATH"
 
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"

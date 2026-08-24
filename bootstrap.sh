@@ -56,19 +56,30 @@ if ! have eza; then
 fi
 
 # --------------------------------------------------------------------- fzf
-# .zshrc uses `fzf --zsh`, added in fzf 0.48. Ubuntu's archive lags behind
-# that, so install the upstream binary into ~/.local/bin (which precedes
-# /usr/bin on PATH) rather than using the apt package.
-if ! fzf --zsh >/dev/null 2>&1; then
-	log "Installing fzf (upstream; apt version is too old for --zsh)"
-	tmp=$(mktemp -d)
-	curl -fsSL -o "$tmp/fzf.tar.gz" \
-		https://github.com/junegunn/fzf/releases/latest/download/fzf-linux_amd64.tar.gz
-	tar -xzf "$tmp/fzf.tar.gz" -C "$tmp" fzf
-	install -m755 "$tmp/fzf" "$BIN/"
-	rm -rf "$tmp"
-	hash -r
+# Official install (fzf README): git clone + install script. Ubuntu's apt
+# build is too old for `fzf --zsh`, which .zshrc relies on.
+#
+# --no-update-rc is essential: the script appends PATH and shell-integration
+# lines to ~/.zshrc, which here is a symlink into this repo. Without it the
+# install would write itself into the dotfiles and follow us to other machines.
+# .zshrc already puts ~/.fzf/bin on PATH and calls `fzf --zsh` itself.
+if [ ! -d "$HOME/.fzf" ]; then
+	log "Installing fzf (official git method)"
+	git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+	"$HOME/.fzf/install" --all --no-update-rc
+else
+	log "Updating fzf"
+	git -C "$HOME/.fzf" pull --ff-only --quiet || true
+	"$HOME/.fzf/install" --all --no-update-rc >/dev/null
 fi
+
+# Remove a stray fzf dropped in ~/.local/bin by an earlier version of this
+# script; it precedes ~/.fzf/bin on PATH and would shadow the real install.
+if [ -f "$BIN/fzf" ] && [ ! -L "$BIN/fzf" ]; then
+	rm -f "$BIN/fzf"
+	echo "  removed stale $BIN/fzf"
+fi
+hash -r
 
 # ------------------------------------------------------------------ zoxide
 have zoxide || { log "Installing zoxide"; curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; }
@@ -175,7 +186,7 @@ ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 # tarball unpacks to /opt/nvim/bin, which is not the same as /opt/nvim.
 # Check against the PATH .zshrc actually builds, not this script's.
 log "Verifying tools resolve on the shell PATH"
-CHECK_PATH="$HOME/.local/bin:/opt/nvim/bin:/usr/local/go/bin:$PATH"
+CHECK_PATH="$HOME/.local/bin:$HOME/.fzf/bin:/opt/nvim/bin:/usr/local/go/bin:$PATH"
 missing=""
 for t in nvim tmux zsh stow fzf fd bat eza zoxide oh-my-posh yazi lazygit delta git gh; do
 	PATH="$CHECK_PATH" command -v "$t" >/dev/null 2>&1 || missing="$missing $t"
