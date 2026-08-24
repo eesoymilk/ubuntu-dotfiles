@@ -16,7 +16,7 @@ sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends \
 	zsh stow tmux git curl wget unzip tar gzip ca-certificates \
 	build-essential pkg-config \
-	fzf fd-find bat ripgrep jq \
+	fd-find bat ripgrep jq \
 	wl-clipboard \
 	python3 python3-venv
 
@@ -53,6 +53,21 @@ if ! have eza; then
 		sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
 	sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
 	sudo apt-get update -qq && sudo apt-get install -y eza
+fi
+
+# --------------------------------------------------------------------- fzf
+# .zshrc uses `fzf --zsh`, added in fzf 0.48. Ubuntu's archive lags behind
+# that, so install the upstream binary into ~/.local/bin (which precedes
+# /usr/bin on PATH) rather than using the apt package.
+if ! fzf --zsh >/dev/null 2>&1; then
+	log "Installing fzf (upstream; apt version is too old for --zsh)"
+	tmp=$(mktemp -d)
+	curl -fsSL -o "$tmp/fzf.tar.gz" \
+		https://github.com/junegunn/fzf/releases/latest/download/fzf-linux_amd64.tar.gz
+	tar -xzf "$tmp/fzf.tar.gz" -C "$tmp" fzf
+	install -m755 "$tmp/fzf" "$BIN/"
+	rm -rf "$tmp"
+	hash -r
 fi
 
 # ------------------------------------------------------------------ zoxide
@@ -165,6 +180,8 @@ missing=""
 for t in nvim tmux zsh stow fzf fd bat eza zoxide oh-my-posh yazi lazygit delta git gh; do
 	PATH="$CHECK_PATH" command -v "$t" >/dev/null 2>&1 || missing="$missing $t"
 done
+# Presence is not enough for fzf: an old apt build resolves fine but has no --zsh.
+PATH="$CHECK_PATH" fzf --zsh >/dev/null 2>&1 || missing="$missing fzf(--zsh-unsupported)"
 if [ -n "$missing" ]; then
 	echo "  MISSING:$missing"
 	echo "  (re-run bootstrap, or install these by hand - see README troubleshooting)"
