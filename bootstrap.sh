@@ -156,16 +156,39 @@ mkdir -p "$HOME/.claude"
 ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
 # -------------------------------------------------------------- default shell
-if [ "$(basename "${SHELL:-}")" != "zsh" ]; then
+LOGIN_SHELL=$(getent passwd "$USER" | cut -d: -f7)
+if [ "$(basename "$LOGIN_SHELL")" != "zsh" ]; then
 	log "Setting zsh as the default shell"
-	chsh -s "$(command -v zsh)" || echo "chsh failed (common on managed/LDAP accounts) - set it manually or exec zsh from your terminal profile"
+	if chsh -s "$(command -v zsh)"; then
+		NEED_RELOGIN=1
+	else
+		# Common on company LDAP/AD-managed accounts. Chain from bash instead:
+		# terminal-agnostic, and survives switching emulators.
+		echo "chsh failed (typical on managed accounts) - falling back to a .bashrc exec"
+		LINE='[ -z "$ZSH_VERSION" ] && [ -x "$(command -v zsh)" ] && exec zsh -l'
+		grep -qF "$LINE" "$HOME/.bashrc" 2>/dev/null || echo "$LINE" >>"$HOME/.bashrc"
+	fi
+else
+	# passwd is already zsh, but $SHELL in this desktop session may still be
+	# stale from an earlier login. Terminals that read $SHELL (Ghostty among
+	# them) will keep launching the old shell until the session restarts.
+	if [ "$(basename "${SHELL:-}")" != "zsh" ]; then NEED_RELOGIN=1; fi
 fi
 
-log "Done. Open a new terminal, then:"
+if [ -n "${NEED_RELOGIN:-}" ]; then
+	log "Log out and back in before continuing."
+	cat <<'EOF'
+Your login shell is now zsh, but $SHELL in this desktop session is still
+stale. Terminals that pick the shell from $SHELL (Ghostty does) will keep
+launching the old one until you end the session. A new window is not
+enough - log out and back in, or reboot.
+EOF
+fi
+
+log "Then:"
 cat <<'EOF'
   1. zinit auto-installs plugins on first zsh launch (wait a few seconds)
   2. Start tmux once; TPM auto-clones and installs plugins
   3. nvm install --lts
   4. Set your terminal font to "JetBrainsMono Nerd Font"
-  5. gh auth login
 EOF
