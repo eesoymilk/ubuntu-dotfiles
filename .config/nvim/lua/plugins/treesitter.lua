@@ -1,5 +1,8 @@
 return {
   "nvim-treesitter/nvim-treesitter",
+  -- Upstream's default branch is now the rewritten `main`, which drops the
+  -- nvim-treesitter.configs API this file uses. Pin the frozen master branch.
+  branch = "master",
   build = ":TSUpdate",
   cond = not vim.g.vscode,
   dependencies = {},
@@ -10,6 +13,12 @@ return {
     indent = { enable = true },
     auto_install = true,
     autotag = { enable = true },
+    -- latex must be generated from grammar, which needs the tree-sitter CLI
+    -- and node at install time. Not worth it: vimtex highlights tex with its
+    -- own syntax engine (its recommended setup), and render-markdown degrades
+    -- gracefully without the parser. Ignore it so auto_install and every
+    -- ensure_installed pass stop erroring on machines without the CLI.
+    ignore_install = { "latex" },
     ensure_installed = {
       "bash",
       "c",
@@ -28,7 +37,6 @@ return {
       "rust",
       "tsx",
       "typescript",
-      "latex",
       "go",
       "yaml",
       "vim",
