@@ -16,6 +16,11 @@ prefix = "ctrl+a"
 
 # Mirror tmux split: prefix+- horizontal (default), keep prefix+v vertical.
 split_horizontal = "prefix+minus"
+# Move the focused pane around the layout, shifted hjkl mirroring focus_pane_*.
+swap_pane_left = "prefix+shift+h"
+swap_pane_down = "prefix+shift+j"
+swap_pane_up = "prefix+shift+k"
+swap_pane_right = "prefix+shift+l"
 
 # Jump straight to agent row N in the sidebar.
 focus_agent = "prefix+alt+1..9"
