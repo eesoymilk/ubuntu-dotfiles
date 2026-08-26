@@ -31,7 +31,6 @@ Each section is a step, and a step that fails is recorded while the rest still i
 The summary at the end lists every step as `ok` or `FAILED` and the script exits non-zero if anything failed.
 Re-running retries only what is missing.
 
-
 Because `gh auth login` has to happen before cloning a private repo, `~/.config/gh/config.yml` already exists by the time stow runs.
 That is a real conflict and bootstrap handles it: conflicting files are moved to `~/dotfiles-backup-<timestamp>/` before stowing.
 Your credentials in `hosts.yml` are gitignored and never touched.
@@ -56,6 +55,7 @@ Then open a new terminal and:
 | `.config/herdr/` | terminal workspace manager for agents |
 | `.config/ghostty/` | terminal config; Ghostty is installed by bootstrap |
 | `.claude/agents/`, `AGENTS.md` | agent config, symlinked to `~/.claude/CLAUDE.md` |
+| `.claude/statusline.sh` | Claude Code status line (see below) |
 | `.local/bin/tmux-sessionizer` | `prefix + f` popup, `tms` alias |
 
 Not ported from the macOS repo: `aerospace/` (macOS-only), `btop/` and `htop/` (auto-generated stock defaults).
@@ -115,7 +115,6 @@ On 24.04 there is no archive package, and upstream's own install docs point at t
 The community `.deb` is installed directly rather than through an apt source, so it does not upgrade with `apt upgrade`.
 Re-run `bootstrap.sh`'s installer, or the upstream one-liner, to move to a newer Ghostty.
 
-
 ### Neovim treesitter
 
 `nvim-treesitter` has two branches and they are not interchangeable.
@@ -136,6 +135,31 @@ Consequences of being on `main`, all reflected in `lua/plugins/treesitter.lua`:
 
 The tree-sitter CLI is a hard requirement of `main`, which is why `bootstrap.sh` installs it.
 Ubuntu's `tree-sitter-cli` is 0.20.8 and `main` needs 0.26.1 or newer, so it comes from the official release binary instead.
+
+### Claude Code status line
+
+Claude Code's own footer only shows the permission mode.
+`.claude/statusline.sh` adds a row above it with model, effort, context percentage, directory, git branch, churn, elapsed time, and cost.
+
+It is width-aware because it has to be.
+Claude Code captures the script's stdout instead of giving it a terminal, so `tput cols` reads nothing; the terminal width arrives in `COLUMNS` instead (Claude Code 2.1.153+).
+The script fills segments in priority order, falls back to a shorter form where one exists, skips what will not fit, and spends whatever is left on a context bar.
+A narrow split therefore degrades to just model and context rather than wrapping into the prompt.
+
+Turning it on is one entry in `~/.claude/settings.json`, which is deliberately **not** in this repo - Claude Code rewrites that file whenever you change model or theme, and an atomic rewrite would replace a stowed symlink with a real file:
+
+```json
+{
+  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh", "padding": 0 }
+}
+```
+
+Test it without launching Claude Code:
+
+```bash
+echo '{"model":{"display_name":"Opus 5"},"workspace":{"current_dir":"'"$HOME"'"},"context_window":{"used_percentage":42}}' \
+  | COLUMNS=100 ~/.claude/statusline.sh
+```
 
 ## Uninstall
 
