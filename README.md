@@ -26,6 +26,12 @@ cd ~/ubuntu-dotfiles
 `bootstrap.sh` is idempotent, so re-running it to pick up a new tool is safe.
 It needs `sudo`.
 
+No single tool can abort the run.
+Each section is a step, and a step that fails is recorded while the rest still install, so one unreachable mirror costs you that tool rather than the whole machine.
+The summary at the end lists every step as `ok` or `FAILED` and the script exits non-zero if anything failed.
+Re-running retries only what is missing.
+
+
 Because `gh auth login` has to happen before cloning a private repo, `~/.config/gh/config.yml` already exists by the time stow runs.
 That is a real conflict and bootstrap handles it: conflicting files are moved to `~/dotfiles-backup-<timestamp>/` before stowing.
 Your credentials in `hosts.yml` are gitignored and never touched.
@@ -48,7 +54,7 @@ Then open a new terminal and:
 | `.config/ohmyposh/` | `zen.toml` prompt |
 | `.config/git/`, `.config/gh/` | global gitignore, gh settings (no credentials) |
 | `.config/herdr/` | terminal workspace manager for agents |
-| `.config/ghostty/` | carried, but **not installed by bootstrap** (see below) |
+| `.config/ghostty/` | terminal config; Ghostty is installed by bootstrap |
 | `.claude/agents/`, `AGENTS.md` | agent config, symlinked to `~/.claude/CLAUDE.md` |
 | `.local/bin/tmux-sessionizer` | `prefix + f` popup, `tms` alias |
 
@@ -71,6 +77,7 @@ Upstream changes asset names and layouts, and the documented path is what keeps 
 | lazygit | apt where packaged, else the official release recipe |
 | git-delta | official `.deb` from the releases page |
 | gh | GitHub's official apt repository |
+| ghostty | Ubuntu archive from 26.04, else the community `.deb` upstream documents |
 
 Both `amd64` and `arm64` are handled; the script resolves each project's asset naming from `uname -m` and exits early on anything else.
 
@@ -100,8 +107,13 @@ If `cat` or `prefix + f` misbehaves, check those symlinks first.
 
 ### Ghostty
 
-The config is carried over but `bootstrap.sh` does not install Ghostty, since it isn't in the Ubuntu archive and a work machine may be fine with the stock terminal.
-To use it, install Ghostty separately and the config applies automatically.
+Ghostty reached the Ubuntu archive in 26.04.
+On 24.04 there is no archive package, and upstream's own install docs point at the community `.deb` from [ghostty-ubuntu](https://github.com/mkasberg/ghostty-ubuntu) as the only prebuilt option for older releases.
+`bootstrap.sh` follows that split: apt where the archive has it, the community installer otherwise.
+
+The community `.deb` is installed directly rather than through an apt source, so it does not upgrade with `apt upgrade`.
+Re-run `bootstrap.sh`'s installer, or the upstream one-liner, to move to a newer Ghostty.
+
 
 ## Uninstall
 
