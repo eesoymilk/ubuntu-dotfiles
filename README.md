@@ -65,7 +65,7 @@ Upstream changes asset names and layouts, and the documented path is what keeps 
 | fd, bat | Ubuntu apt as `fdfind` / `batcat`, symlinked to upstream names |
 | neovim | official release tarball under `/opt`, with a stable `/opt/nvim` symlink |
 | eza | official apt repository (`deb.gierens.de`) |
-| yazi | official apt repository (`yazi-rs.github.io/builds`) |
+| yazi | official apt repository (`yazi-rs.github.io/builds`); plugins via `ya pkg install` |
 | fzf | official git clone + `~/.fzf/install --no-update-rc` |
 | zoxide, oh-my-posh, lazydocker, nvm | official upstream install scripts |
 | lazygit | apt where packaged, else the official release recipe |

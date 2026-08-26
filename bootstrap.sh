@@ -268,10 +268,16 @@ chmod +x "$HOME/.local/bin/tmux-sessionizer" 2>/dev/null || true
 mkdir -p "$HOME/.claude"
 ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
-# Yazi plugins/flavors are gitignored build artifacts; restore them from the
-# pinned package.toml. Must run after stow so the manifest is in place.
-log "Installing yazi plugins (ya pkg install)"
-ya pkg install
+# ----------------------------------------------------------- yazi packages
+# Unlike zinit and TPM, yazi does not self-install its plugins: init.lua
+# `require`s them outright, so a fresh machine fails to start yazi at all.
+# plugins/ and flavors/ are gitignored, so this has to run after stow puts
+# package.toml in place. `install` honours the pinned revs; `upgrade` would
+# move them and rewrite package.toml inside the repo.
+if have ya; then
+	log "Installing yazi plugins and flavors (ya pkg install)"
+	ya pkg install
+fi
 
 # ------------------------------------------------------------------ verify
 # Installing a tool and having it reachable are different things: the nvim
@@ -280,7 +286,7 @@ ya pkg install
 log "Verifying tools resolve on the shell PATH"
 CHECK_PATH="$HOME/.local/bin:$HOME/.fzf/bin:/opt/nvim/bin:/usr/local/bin:/usr/local/go/bin:$PATH"
 missing=""
-for t in nvim tmux zsh stow fd bat eza zoxide oh-my-posh yazi lazygit lazydocker delta git gh rg jq tree-sitter; do
+for t in nvim tree-sitter tmux zsh stow fd bat eza zoxide oh-my-posh yazi ya lazygit lazydocker delta git gh rg jq; do
 	PATH="$CHECK_PATH" command -v "$t" >/dev/null 2>&1 || missing="$missing $t"
 done
 # Presence is not enough for fzf: an old apt build resolves fine but has no --zsh.
