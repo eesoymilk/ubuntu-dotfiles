@@ -1,59 +1,67 @@
+-- nvim-treesitter main branch (full rewrite; master is archived and breaks
+-- on Neovim 0.12). The plugin now only installs parsers and queries;
+-- highlighting and indentation are wired to core Neovim per buffer below.
+-- Requires the tree-sitter CLI, installed by bootstrap.sh.
+local languages = {
+  "bash",
+  "c",
+  "cpp",
+  "css",
+  "go",
+  "html",
+  "javascript",
+  "json",
+  "lua",
+  "markdown",
+  "markdown_inline",
+  "python",
+  "query",
+  "regex",
+  "rust",
+  "svelte",
+  "tsx",
+  "typescript",
+  "vim",
+  "yaml",
+}
+
 return {
   "nvim-treesitter/nvim-treesitter",
-  -- Upstream's default branch is now the rewritten `main`, which drops the
-  -- nvim-treesitter.configs API this file uses. Pin the frozen master branch.
-  branch = "master",
+  branch = "main",
   build = ":TSUpdate",
   cond = not vim.g.vscode,
-  dependencies = {},
-  event = { "BufEnter" },
-  cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
-  opts = {
-    highlight = { enable = true },
-    indent = { enable = true },
-    auto_install = true,
-    autotag = { enable = true },
-    -- latex must be generated from grammar, which needs the tree-sitter CLI
-    -- and node at install time. Not worth it: vimtex highlights tex with its
-    -- own syntax engine (its recommended setup), and render-markdown degrades
-    -- gracefully without the parser. Ignore it so auto_install and every
-    -- ensure_installed pass stop erroring on machines without the CLI.
-    ignore_install = { "latex" },
-    ensure_installed = {
-      "bash",
-      "c",
-      "cpp",
-      "html",
-      "javascript",
-      "svelte",
-      "css",
-      "json",
-      "lua",
-      "markdown",
-      "markdown_inline",
-      "python",
-      "query",
-      "regex",
-      "rust",
-      "tsx",
-      "typescript",
-      "go",
-      "yaml",
-      "vim",
-    },
-  },
-  config = function(_, opts)
-    if type(opts.ensure_installed) == "table" then
-      ---@type table<string, boolean>
-      local added = {}
-      opts.ensure_installed = vim.tbl_filter(function(lang)
-        if added[lang] then
-          return false
-        end
-        added[lang] = true
-        return true
-      end, opts.ensure_installed)
+  lazy = false, -- the main branch does not support lazy-loading
+  config = function()
+    local ts = require("nvim-treesitter")
+    ts.install(languages)
+
+    local function attach(buf, lang)
+      if pcall(vim.treesitter.start, buf, lang) then
+        vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end
     end
-    require("nvim-treesitter.configs").setup(opts)
+
+    vim.api.nvim_create_autocmd("FileType", {
+      group = vim.api.nvim_create_augroup("treesitter_attach", {}),
+      callback = function(ev)
+        local lang = vim.treesitter.language.get_lang(ev.match)
+        -- latex stays out: its parser must be generated from grammar, and
+        -- vimtex highlights tex with its own syntax engine anyway.
+        if not lang or lang == "latex" then
+          return
+        end
+        if vim.tbl_contains(ts.get_installed(), lang) then
+          attach(ev.buf, lang)
+        elseif vim.tbl_contains(ts.get_available(), lang) then
+          -- auto-install a missing parser, then attach if the buffer is
+          -- still around showing the same filetype
+          ts.install(lang):await(function()
+            if vim.api.nvim_buf_is_valid(ev.buf) and vim.bo[ev.buf].filetype == ev.match then
+              attach(ev.buf, lang)
+            end
+          end)
+        end
+      end,
+    })
   end,
 }
