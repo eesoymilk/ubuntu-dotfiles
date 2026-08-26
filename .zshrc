@@ -120,3 +120,6 @@ if [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/google-clou
 # the doctor check false-positives there; disable it in those sessions.
 [ -n "$CLAUDECODE" ] && export _ZO_DOCTOR=0
 eval "$(zoxide init --cmd cd zsh)"
+
+# Machine-local config (not committed) - work/company settings live in ~/.zshrc.local
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
