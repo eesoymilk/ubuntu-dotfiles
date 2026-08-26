@@ -24,11 +24,13 @@ x86_64)
 	NVIM_ARCH=x86_64
 	GO_ARCH=x86_64 # lazygit
 	DEB_ARCH=amd64 # delta
+	TS_ARCH=x64    # tree-sitter
 	;;
 aarch64 | arm64)
 	NVIM_ARCH=arm64
 	GO_ARCH=arm64
 	DEB_ARCH=arm64
+	TS_ARCH=arm64
 	;;
 *)
 	echo "Unsupported architecture: $(uname -m)" >&2
@@ -70,6 +72,20 @@ else
 	log "Neovim already present"
 fi
 sudo ln -sfn "/opt/nvim-linux-$NVIM_ARCH" /opt/nvim
+
+# -------------------------------------------------------------- tree-sitter
+# Official (tree-sitter CLI README): prebuilt release binary. Required by
+# nvim-treesitter's main branch (0.26.1+, explicitly not the npm package);
+# Ubuntu's tree-sitter-cli package is far too old (0.20.x).
+if ! have tree-sitter; then
+	log "Installing tree-sitter CLI (official release binary)"
+	tmp=$(mktemp -d)
+	curl -fsSL -o "$tmp/tree-sitter.gz" \
+		"https://github.com/tree-sitter/tree-sitter/releases/latest/download/tree-sitter-linux-$TS_ARCH.gz"
+	gunzip "$tmp/tree-sitter.gz"
+	install -m 755 "$tmp/tree-sitter" "$BIN/tree-sitter"
+	rm -rf "$tmp"
+fi
 
 # --------------------------------------------------------------------- eza
 # Official (eza INSTALL.md): the deb.gierens.de apt repository.
@@ -252,6 +268,11 @@ chmod +x "$HOME/.local/bin/tmux-sessionizer" 2>/dev/null || true
 mkdir -p "$HOME/.claude"
 ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
+# Yazi plugins/flavors are gitignored build artifacts; restore them from the
+# pinned package.toml. Must run after stow so the manifest is in place.
+log "Installing yazi plugins (ya pkg install)"
+ya pkg install
+
 # ------------------------------------------------------------------ verify
 # Installing a tool and having it reachable are different things: the nvim
 # tarball unpacks to a bin/ subdirectory, which is not the same as its root.
@@ -259,7 +280,7 @@ ln -sf "$HOME/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 log "Verifying tools resolve on the shell PATH"
 CHECK_PATH="$HOME/.local/bin:$HOME/.fzf/bin:/opt/nvim/bin:/usr/local/bin:/usr/local/go/bin:$PATH"
 missing=""
-for t in nvim tmux zsh stow fd bat eza zoxide oh-my-posh yazi lazygit lazydocker delta git gh rg jq; do
+for t in nvim tmux zsh stow fd bat eza zoxide oh-my-posh yazi lazygit lazydocker delta git gh rg jq tree-sitter; do
 	PATH="$CHECK_PATH" command -v "$t" >/dev/null 2>&1 || missing="$missing $t"
 done
 # Presence is not enough for fzf: an old apt build resolves fine but has no --zsh.
