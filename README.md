@@ -70,6 +70,7 @@ Upstream changes asset names and layouts, and the documented path is what keeps 
 | zsh, stow, tmux, git, ripgrep, jq, wl-clipboard | Ubuntu apt |
 | fd, bat | Ubuntu apt as `fdfind` / `batcat`, symlinked to upstream names |
 | neovim | official release tarball under `/opt`, with a stable `/opt/nvim` symlink |
+| tree-sitter CLI | official release binary (apt has 0.20.8; nvim-treesitter needs 0.26.1+) |
 | eza | official apt repository (`deb.gierens.de`) |
 | yazi | official apt repository (`yazi-rs.github.io/builds`); plugins via `ya pkg install` |
 | fzf | official git clone + `~/.fzf/install --no-update-rc` |
@@ -114,6 +115,27 @@ On 24.04 there is no archive package, and upstream's own install docs point at t
 The community `.deb` is installed directly rather than through an apt source, so it does not upgrade with `apt upgrade`.
 Re-run `bootstrap.sh`'s installer, or the upstream one-liner, to move to a newer Ghostty.
 
+
+### Neovim treesitter
+
+`nvim-treesitter` has two branches and they are not interchangeable.
+`master` is frozen and its README states plainly that **Neovim 0.12 is not supported**; `main` requires 0.12 or later.
+Since `bootstrap.sh` installs the latest Neovim release, this repo tracks `main`.
+
+Do not re-pin `master` to recover the old `nvim-treesitter.configs` API.
+On 0.12 it breaks concretely: 0.12 dropped the `all = false` option to `add_directive`, so directives now always receive a *list* of nodes, and master's `#downcase!` passes that list straight to `get_node_text`.
+Every bash heredoc then raises `attempt to call method 'range' (a nil value)` from the highlighter, which is most of `bootstrap.sh`.
+
+Consequences of being on `main`, all reflected in `lua/plugins/treesitter.lua`:
+
+- it cannot be lazy-loaded, so the spec is `lazy = false`
+- `highlight.enable` / `indent.enable` are gone; the config starts the highlighter from a `FileType` autocmd and sets `indentexpr` itself
+- folding is deliberately left alone there, because `nvim-ufo` owns `foldexpr` and `foldmethod`
+- there is no `ignore_install`, so `latex` is simply absent from the language list rather than excluded from it
+- parsers and queries live in `~/.local/share/nvim/site/`, not in the plugin directory
+
+The tree-sitter CLI is a hard requirement of `main`, which is why `bootstrap.sh` installs it.
+Ubuntu's `tree-sitter-cli` is 0.20.8 and `main` needs 0.26.1 or newer, so it comes from the official release binary instead.
 
 ## Uninstall
 
