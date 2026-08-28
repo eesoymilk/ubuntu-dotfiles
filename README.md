@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **This repo is archived.**
+> It has been unified with my other per-OS dotfiles into [eesoymilk/dotfiles](https://github.com/eesoymilk/dotfiles),
+> one stow-based repo covering macOS, Ubuntu, and Arch.
+
 # ubuntu-dotfiles
 
 Dotfiles for my Ubuntu work laptop.
